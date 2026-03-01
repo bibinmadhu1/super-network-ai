@@ -2,78 +2,120 @@
 
 AI-Powered Networking to Find Cofounders, Teams & Clients
 
-## Quick Start
+---
+
+## Recommended Hosting Stack (both free)
+
+| Layer | Service | Why |
+|-------|---------|-----|
+| **Backend** (FastAPI) | [Render.com](https://render.com) | Free web service, auto-deploys from GitHub, zero config needed |
+| **Frontend** (Streamlit) | [Streamlit Cloud](https://streamlit.io/cloud) | Free, built for Streamlit, deploys straight from GitHub |
+
+---
+
+## Local Development
 
 ### 1. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Start the FastAPI backend
+### 2. Configure environment
+```bash
+cp .env.example .env
+# .env already points to http://localhost:8000 — no changes needed locally
+```
+
+### 3. Run backend
 ```bash
 uvicorn backend:app --reload --port 8000
+# API docs → http://localhost:8000/docs
 ```
-API docs available at: http://localhost:8000/docs
 
-### 3. Start the Streamlit frontend (new terminal)
+### 4. Run frontend (new terminal)
 ```bash
 streamlit run app.py
+# Opens → http://localhost:8501
 ```
-Opens at: http://localhost:8501
 
-### 4. Get a Groq API Key
-- Sign up at https://console.groq.com
-- Create an API key (it's free)
-- Enter it in the sidebar of the app
+### 5. Add Groq API key
+Get a free key at https://console.groq.com and paste it into the sidebar.
 
-### 5. Seed demo data (optional)
-Click **"Seed Sample Users"** on the home page to add 5 realistic demo profiles.
+### 6. Seed demo data (optional)
+Click **"Seed Sample Users"** on the home page.
 
 ---
 
-## Features
+## Deploying to Production
 
-| Feature | Status |
-|---|---|
-| Ikigai-based onboarding | ✅ |
-| CV/portfolio text import via AI | ✅ |
-| AI profile enhancement (pre-fill) | ✅ |
-| Natural language search | ✅ |
-| AI-ranked matches with explanations | ✅ |
-| Match categorization (cofounder/teammate/client) | ✅ |
-| In-app messaging | ✅ |
-| Connection requests (accept/decline) | ✅ |
-| Public/private profile toggle | ✅ |
-| Block users | ✅ |
-| Profile export (JSON) | ✅ |
-| Web-only, minimalist dark UI | ✅ |
-
-## Architecture
-
-```
-┌─────────────────┐         ┌──────────────────────────┐
-│  Streamlit UI   │ ──────► │  FastAPI Backend          │
-│  app.py         │  HTTP   │  backend.py               │
-│                 │         │                          │
-│  - Auth/Login   │         │  - User CRUD             │
-│  - Onboarding   │         │  - AI-powered search     │
-│  - Search UI    │         │  - CV import             │
-│  - Messages     │         │  - Profile enhancement   │
-│  - Connections  │         │  - Messaging             │
-└─────────────────┘         │  - Connection requests   │
-                             │  - Block/visibility      │
-                             └──────────┬───────────────┘
-                                        │
-                                        ▼
-                             ┌──────────────────────────┐
-                             │  Groq API (llama3-70b)   │
-                             │  - Natural language match │
-                             │  - CV extraction         │
-                             │  - Profile AI-fill       │
-                             └──────────────────────────┘
+### Step 1 — Push to GitHub
+```bash
+git init
+git add .
+git commit -m "initial commit"
+git remote add origin https://github.com/YOUR_USERNAME/supernetworkai.git
+git push -u origin main
 ```
 
-## API Endpoints
+### Step 2 — Deploy Backend on Render.com (free)
+
+1. Go to [render.com](https://render.com) and sign up / log in
+2. Click **New** → **Blueprint**
+3. Connect your GitHub repo
+4. Render will auto-detect `render.yaml` → click **Apply**
+5. Wait ~2 minutes for the build to finish
+6. Copy your live URL, e.g. `https://supernetworkai-backend.onrender.com`
+
+> **Free tier note:** Render free services spin down after 15 min of inactivity.
+> The first request after sleep takes ~30s to wake up. Fine for demos.
+> Upgrade to the $7/mo Starter plan to keep it always-on.
+
+### Step 3 — Deploy Frontend on Streamlit Cloud (free)
+
+1. Go to [share.streamlit.io](https://share.streamlit.io) and sign in with GitHub
+2. Click **New app**
+3. Select your repo, branch `main`, file `app.py`
+4. Click **Advanced settings** → **Secrets** and paste:
+   ```toml
+   BACKEND_URL = "https://supernetworkai-backend.onrender.com"
+   ```
+   Replace with your actual Render URL from Step 2.
+5. Click **Deploy** — your app goes live at `https://YOUR-APP.streamlit.app`
+
+---
+
+## Environment Configuration Summary
+
+The frontend resolves `BACKEND_URL` in this priority order — **no code changes needed**:
+
+```
+1. st.secrets["BACKEND_URL"]   ← Streamlit Cloud secrets  (production)
+2. os.environ["BACKEND_URL"]   ← .env file / system env   (local / Docker)
+3. http://localhost:8000        ← hardcoded fallback        (bare local dev)
+```
+
+---
+
+## Project Structure
+
+```
+supernetworkai/
+├── backend.py              # FastAPI — all business logic & AI
+├── app.py                  # Streamlit — UI only, calls backend via HTTP
+├── requirements.txt
+├── render.yaml             # Render.com one-click deploy config
+├── .env.example            # Copy to .env for local dev
+├── .gitignore
+└── .streamlit/
+    ├── config.toml         # Streamlit theme
+    └── secrets.toml        # Local secrets (git-ignored)
+```
+
+---
+
+## API Reference
+
+Full interactive docs at `YOUR_BACKEND_URL/docs`
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -85,19 +127,17 @@ Click **"Seed Sample Users"** on the home page to add 5 realistic demo profiles.
 | POST | `/users/{id}/ai-fill` | AI enhance profile |
 | POST | `/search` | NL search with AI ranking |
 | POST | `/messages` | Send message |
-| GET | `/messages/{id}` | Get messages |
 | GET | `/messages/{id}/conversations` | List conversations |
 | POST | `/connections/request` | Send connection request |
-| GET | `/connections/{id}` | Get connections |
-| PATCH | `/connections/{req_id}` | Accept/decline request |
+| PATCH | `/connections/{id}?action=accept\|decline` | Respond to request |
 | POST | `/users/block` | Block a user |
-| POST | `/users/unblock` | Unblock a user |
 | POST | `/dev/seed` | Seed demo users |
 | GET | `/health` | Health check |
 
+---
+
 ## Notes
 
-- This demo uses in-memory storage. Restart the backend to clear all data.
-- For production: replace the `USERS`, `MESSAGES`, etc. dicts with a real database (PostgreSQL recommended).
-- The Groq API key is passed per-request from the frontend — never stored server-side.
-- Model used: `llama3-70b-8192` via Groq (fast, capable, free tier available)
+- **Storage:** In-memory — data resets on restart. For persistence, Render also offers a free PostgreSQL instance.
+- **Groq key:** Passed per-request from the frontend sidebar — never stored server-side.
+- **Model:** `llama3-70b-8192` via Groq.

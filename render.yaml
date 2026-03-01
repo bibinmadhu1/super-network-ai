@@ -1,0 +1,25 @@
+# render.yaml — Deploy SuperNetworkAI backend to Render.com for free
+# Docs: https://render.com/docs/blueprint-spec
+#
+# How to use:
+#   1. Push your project to a GitHub repo
+#   2. Go to https://dashboard.render.com → New → Blueprint
+#   3. Connect your repo — Render will auto-detect this file
+#   4. Click "Apply" — your backend will be live in ~2 minutes
+#   5. Copy the URL (e.g. https://supernetworkai.onrender.com)
+#      and paste it into Streamlit Cloud secrets as BACKEND_URL
+
+services:
+  - type: web
+    name: supernetworkai-backend
+    runtime: python
+    plan: free                      # Free tier — 512 MB RAM, spins down after 15 min inactivity
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      # Optional: set a default Groq key server-side (users can still override per-request)
+      # - key: GROQ_API_KEY
+      #   value: your_key_here

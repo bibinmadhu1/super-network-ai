@@ -2,17 +2,39 @@
 SuperNetworkAI - Streamlit Frontend
 Run: streamlit run app.py
 Make sure backend is running on http://localhost:8000
+
+Environment configuration:
+  Local:           set BACKEND_URL in .env  (defaults to http://localhost:8000)
+  Streamlit Cloud: set BACKEND_URL in App Settings → Secrets as:
+                       BACKEND_URL = "https://your-app.onrender.com"
 """
 
+import os
 import streamlit as st
 import requests
 import json
 from datetime import datetime
 
 # ──────────────────────────────────────────────
-# CONFIG
+# CONFIG — works locally AND on Streamlit Cloud
 # ──────────────────────────────────────────────
-API = "http://localhost:8000"
+# Priority order:
+#   1. st.secrets["BACKEND_URL"]  (Streamlit Cloud secrets)
+#   2. OS environment variable    (local .env / Docker / Render)
+#   3. Hard-coded localhost        (bare local dev fallback)
+def get_backend_url() -> str:
+    try:
+        # Streamlit Cloud secrets
+        return st.secrets["BACKEND_URL"].rstrip("/")
+    except (KeyError, FileNotFoundError):
+        pass
+    # OS env var (works with python-dotenv or system env)
+    env_url = os.environ.get("BACKEND_URL", "").strip().rstrip("/")
+    if env_url:
+        return env_url
+    return "http://localhost:8000"
+
+API = get_backend_url()
 
 st.set_page_config(
     page_title="SuperNetworkAI",
