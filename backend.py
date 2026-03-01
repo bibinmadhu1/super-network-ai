@@ -208,7 +208,7 @@ CV Text:
 Return ONLY the JSON object, no markdown, no explanation.
 """
     response = client.chat.completions.create(
-        model="llama3-70b-8192",
+        model="llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.3,
         max_tokens=1500,
@@ -249,7 +249,7 @@ Profile:
 Return ONLY JSON, no markdown.
 """
     response = client.chat.completions.create(
-        model="llama3-70b-8192",
+        model="llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.4,
         max_tokens=800,
@@ -327,7 +327,7 @@ Return ONLY a valid JSON array of objects, each with:
 Sort by score descending. Return top {min(req.top_k, len(candidates[:15]))} matches only. Return ONLY the JSON array.
 """
     response = client.chat.completions.create(
-        model="llama3-70b-8192",
+        model="llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.5,
         max_tokens=2000,
